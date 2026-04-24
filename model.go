@@ -8,6 +8,9 @@ type Model interface {
 	// screen's ShowCursor() function but should only do so when they have focus.
 	// (They will need to keep track of this themselves.)
 	Draw(tcell.Screen)
+	// PostDraw is called after the screen has been flushed, for raw terminal
+	// graphics (e.g. Kitty image protocol) that must not interleave with tcell's buffer.
+	PostDraw(tcell.Screen)
 	// Update receives messages when this model has focus.
 	Update(Msg) Cmd
 

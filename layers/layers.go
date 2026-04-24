@@ -376,6 +376,15 @@ func (l *Layers) Draw(screen tcell.Screen) {
 	}
 }
 
+// PostDraw propagates the PostDraw call to all visible layers.
+func (l *Layers) PostDraw(screen tcell.Screen) {
+	for _, layer := range l.layers {
+		if layer.visible {
+			layer.item.PostDraw(screen)
+		}
+	}
+}
+
 // Update handles input events for this model.
 func (l *Layers) Update(msg tview.Msg) tview.Cmd {
 	if mouseMsg, ok := msg.(tview.MouseMsg); ok && !l.InRect(mouseMsg.Position()) {

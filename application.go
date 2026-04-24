@@ -89,6 +89,10 @@ type Application struct {
 	// options
 	screen             tcell.Screen
 	disableCatchPanics bool
+
+	// beforeDraw is called at the start of every draw cycle, before any
+	// rendering occurs. Use SetBeforeDraw to register e.g. a Kitty image wipe.
+	beforeDraw func()
 }
 
 // NewApplication creates and returns a new application.
@@ -460,12 +464,23 @@ func (a *Application) Suspend(f func()) bool {
 	return true
 }
 
+// SetBeforeDraw registers a callback invoked at the start of every draw cycle,
+// before Phase 1 rendering. Use this to wipe raw terminal graphics (e.g.
+// Kitty image placements) so they don't persist across redraws.
+func (a *Application) SetBeforeDraw(f func()) *Application {
+	a.Lock()
+	a.beforeDraw = f
+	a.Unlock()
+	return a
+}
+
 // draw actually does what Draw() promises to do.
 func (a *Application) draw() *Application {
 	a.RLock()
 	screen := a.screen
 	root := a.root
 	forceRedraw := a.forceRedraw
+	beforeDraw := a.beforeDraw
 	a.RUnlock()
 
 	// Maybe we're not ready yet or not anymore.
@@ -473,9 +488,15 @@ func (a *Application) draw() *Application {
 		return a
 	}
 
+	// Phase 0: wipe raw terminal graphics from the previous frame.
+	if beforeDraw != nil {
+		beforeDraw()
+	}
+
 	drawWidth, drawHeight := screen.Size()
 	root.SetRect(0, 0, drawWidth, drawHeight)
 
+	// Phase 1: render all text/cell content into tcell's back buffer.
 	// tcell already keeps a logical back buffer and emits only visual deltas in
 	// Show(). Avoid clearing on regular redraws so we don't rewrite the full
 	// logical screen every frame; keep full clears for forced redraws.
@@ -483,11 +504,17 @@ func (a *Application) draw() *Application {
 		screen.Clear()
 	}
 	root.Draw(screen)
+
+	// Sync barrier: flush the tcell buffer to stdout before any raw terminal
+	// graphics are written, preventing IO interleaving and screen tearing.
 	screen.Show()
 
 	a.Lock()
 	a.forceRedraw = false
 	a.Unlock()
+
+	// Phase 2: send raw terminal graphics (e.g. Kitty image protocol).
+	root.PostDraw(screen)
 
 	return a
 }

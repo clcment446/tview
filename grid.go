@@ -681,6 +681,15 @@ ItemLoop:
 	}
 }
 
+// PostDraw propagates the PostDraw call to all currently visible child items.
+func (g *Grid) PostDraw(screen tcell.Screen) {
+	for _, item := range g.items {
+		if item.visible && item.Item != nil {
+			item.Item.PostDraw(screen)
+		}
+	}
+}
+
 // Update handles input events for this model.
 func (g *Grid) Update(msg Msg) Cmd {
 	switch msg := msg.(type) {

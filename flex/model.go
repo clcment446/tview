@@ -214,6 +214,15 @@ func (m *Model) Draw(screen tcell.Screen) {
 	}
 }
 
+// PostDraw propagates the PostDraw call to all child items.
+func (m *Model) PostDraw(screen tcell.Screen) {
+	for _, item := range m.items {
+		if item.Item != nil {
+			item.Item.PostDraw(screen)
+		}
+	}
+}
+
 // Focus is called when this model receives focus.
 func (m *Model) Focus(delegate func(m tview.Model)) {
 	for _, item := range m.items {

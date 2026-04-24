@@ -296,6 +296,10 @@ func (b *Box) Draw(screen tcell.Screen) {
 	b.DrawForSubclass(screen, b)
 }
 
+// PostDraw is a no-op for Box. Widgets that render raw terminal graphics
+// (e.g. Kitty image protocol) should override this method.
+func (b *Box) PostDraw(_ tcell.Screen) {}
+
 // DrawForSubclass draws this box under the assumption that model p is a
 // subclass of this box. This is needed e.g. to draw proper box frames which
 // depend on the subclass's focus.
