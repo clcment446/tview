@@ -22,6 +22,7 @@ type Builder func(index int, cursor int) Item
 
 // Model displays a virtual list of models returned by a builder function.
 type Model struct {
+	lastChildren []drawnItem
 	*tview.Box
 	keybinds Keybinds
 
@@ -345,6 +346,23 @@ func (l *Model) setLastDraw(children []drawnItem) {
 	l.lastDraw = children
 }
 
+func (l *Model) PostDraw(screen tcell.Screen) {
+	// Re-fetch dimensions cached during Draw()
+	_, _, width, height := l.InnerRect()
+	if width <= 0 || height <= 0 {
+		return
+	}
+
+	// Iterate through the children we cached
+	for _, child := range l.lastChildren {
+		// Check if the item implements PostDraw (your images)
+		// We cast to interface{} then check the method
+		if pd, ok := child.item.(interface{ PostDraw(tcell.Screen) }); ok {
+			pd.PostDraw(screen)
+		}
+	}
+}
+
 // Draw draws this model onto the screen.
 func (l *Model) Draw(screen tcell.Screen) {
 	l.DrawForSubclass(screen, l)
@@ -367,6 +385,7 @@ func (l *Model) Draw(screen tcell.Screen) {
 		case ScrollBarVisibilityNever:
 			drawScrollBar = false
 		}
+
 		if drawScrollBar {
 			usableWidth, scrollBarX = l.scrollBarLayout(x, width)
 		}
@@ -569,6 +588,8 @@ rebuild:
 
 	l.setLastDraw(children)
 	l.lastRect = rect{x: x, y: y, width: width, height: height}
+
+	l.lastChildren = children // Cache children for PostDraw
 
 	clipped := newClippedScreen(screen, x, y, width, height)
 	for _, child := range children {
