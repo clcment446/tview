@@ -1,7 +1,7 @@
 package layers
 
 import (
-	"github.com/ayn2op/tview"
+	"github.com/clcment446/tview"
 	"github.com/gdamore/tcell/v3"
 )
 

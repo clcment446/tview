@@ -1,8 +1,8 @@
 package picker
 
 import (
-	"github.com/ayn2op/tview/keybind"
-	"github.com/ayn2op/tview/list"
+	"github.com/clcment446/tview/keybind"
+	"github.com/clcment446/tview/list"
 )
 
 type Keybinds struct {

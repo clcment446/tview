@@ -1,8 +1,8 @@
 package tabs
 
 import (
-	"github.com/ayn2op/tview"
-	"github.com/ayn2op/tview/keybind"
+	"github.com/clcment446/tview"
+	"github.com/clcment446/tview/keybind"
 	"github.com/gdamore/tcell/v3"
 )
 

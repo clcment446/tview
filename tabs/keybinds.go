@@ -1,8 +1,8 @@
 package tabs
 
 import (
-	"github.com/ayn2op/tview/help"
-	"github.com/ayn2op/tview/keybind"
+	"github.com/clcment446/tview/help"
+	"github.com/clcment446/tview/keybind"
 )
 
 type Keybinds struct {

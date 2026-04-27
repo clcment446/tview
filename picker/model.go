@@ -1,10 +1,10 @@
 package picker
 
 import (
-	"github.com/ayn2op/tview"
-	"github.com/ayn2op/tview/flex"
-	"github.com/ayn2op/tview/keybind"
-	"github.com/ayn2op/tview/list"
+	"github.com/clcment446/tview"
+	"github.com/clcment446/tview/flex"
+	"github.com/clcment446/tview/keybind"
+	"github.com/clcment446/tview/list"
 	"github.com/gdamore/tcell/v3"
 	"github.com/sahilm/fuzzy"
 )
