@@ -67,10 +67,10 @@ type state struct {
 }
 
 type drawnItem struct {
-	index  int
-	item   Item
-	row    int
-	height int
+	Index  int
+	Item   Item
+	Row    int
+	Height int
 }
 
 type rect struct {
@@ -350,6 +350,10 @@ func (l *Model) GetLastChildren() []drawnItem {
 	return l.lastChildren
 }
 
+func (m *Model) GetInnerRect() (int, int, int, int) {
+	return m.InnerRect()
+}
+
 func (l *Model) PostDraw(screen tcell.Screen) {
 	// Re-fetch dimensions cached during Draw()
 	_, _, width, height := l.InnerRect()
@@ -361,7 +365,7 @@ func (l *Model) PostDraw(screen tcell.Screen) {
 	for _, child := range l.lastChildren {
 		// Check if the item implements PostDraw (your images)
 		// We cast to interface{} then check the method
-		if pd, ok := child.item.(interface{ PostDraw(tcell.Screen) }); ok {
+		if pd, ok := child.Item.(interface{ PostDraw(tcell.Screen) }); ok {
 			pd.PostDraw(screen)
 		}
 	}
@@ -443,7 +447,7 @@ rebuild:
 		l.insertChildren(&children, usableWidth, ah)
 		if len(children) > 0 {
 			last := children[len(children)-1]
-			ah = last.row + last.height + l.gap
+			ah = last.Row + last.Height + l.gap
 		}
 	}
 
@@ -457,10 +461,10 @@ rebuild:
 
 		itemHeight := l.itemHeight(item, usableWidth)
 		children = append(children, drawnItem{
-			index:  i,
-			item:   item,
-			row:    ah,
-			height: itemHeight,
+			Index:  i,
+			Item:   item,
+			Row:    ah,
+			Height: itemHeight,
 		})
 		ah += itemHeight + l.gap
 
@@ -485,7 +489,7 @@ rebuild:
 	if l.snapToItems && l.scroll.wantsCursor && l.cursor >= 0 {
 		found := false
 		for _, child := range children {
-			if child.index == l.cursor {
+			if child.Index == l.cursor {
 				found = true
 				break
 			}
@@ -511,8 +515,8 @@ rebuild:
 		}
 
 		// Fill remaining space with fully visible items if possible.
-		nextIndex := children[len(children)-1].index + 1
-		currentBottom := children[len(children)-1].row + children[len(children)-1].height
+		nextIndex := children[len(children)-1].Index + 1
+		currentBottom := children[len(children)-1].Row + children[len(children)-1].Height
 		for {
 			item := l.builder(nextIndex, l.cursor)
 			if item == nil {
@@ -524,10 +528,10 @@ rebuild:
 				break
 			}
 			children = append(children, drawnItem{
-				index:  nextIndex,
-				item:   item,
-				row:    nextRow,
-				height: itemHeight,
+				Index:  nextIndex,
+				Item:   item,
+				Row:    nextRow,
+				Height: itemHeight,
 			})
 			currentBottom = nextRow + itemHeight
 			nextIndex++
@@ -537,11 +541,11 @@ rebuild:
 	// When scrolling down at the end, clamp so the last item aligns to the bottom.
 	if endReached && pendingDelta > 0 {
 		last := children[len(children)-1]
-		bottom := last.row + last.height
-		if children[0].row < 0 && bottom < height {
+		bottom := last.Row + last.Height
+		if children[0].Row < 0 && bottom < height {
 			adj := height - bottom
 			for i := range children {
-				children[i].row += adj
+				children[i].Row += adj
 			}
 		}
 	}
@@ -549,14 +553,14 @@ rebuild:
 	// Non-snap mode: adjust rows so the cursor item is fully visible.
 	if l.scroll.wantsCursor {
 		for _, child := range children {
-			if child.index != l.cursor {
+			if child.Index != l.cursor {
 				continue
 			}
-			bottom := child.row + child.height
+			bottom := child.Row + child.Height
 			if bottom > height {
 				adj := height - bottom
 				for i := range children {
-					children[i].row += adj
+					children[i].Row += adj
 				}
 			}
 			l.scroll.wantsCursor = false
@@ -566,29 +570,29 @@ rebuild:
 
 	if l.snapToItems {
 		// Snap mode uses the first item as the top anchor.
-		l.scroll.top = children[0].index
+		l.scroll.top = children[0].Index
 		l.scroll.offset = 0
 	} else {
 		// Non-snap mode keeps the first partially visible item as the top anchor.
 		for i := range children {
 			child := children[i]
-			span := child.height
+			span := child.Height
 			if l.gap > 0 {
 				span += l.gap
 			}
-			if child.row <= 0 && child.row+span > 0 {
-				l.scroll.top = child.index
-				l.scroll.offset = -child.row
+			if child.Row <= 0 && child.Row+span > 0 {
+				l.scroll.top = child.Index
+				l.scroll.offset = -child.Row
 				break
 			}
 		}
 	}
 
 	last := children[len(children)-1]
-	if !endReached && l.builder(last.index+1, l.cursor) == nil {
+	if !endReached && l.builder(last.Index+1, l.cursor) == nil {
 		endReached = true
 	}
-	l.atEnd = endReached && last.row+last.height <= height
+	l.atEnd = endReached && last.Row+last.Height <= height
 
 	l.setLastDraw(children)
 	l.lastRect = rect{x: x, y: y, width: width, height: height}
@@ -597,8 +601,8 @@ rebuild:
 
 	clipped := newClippedScreen(screen, x, y, width, height)
 	for _, child := range children {
-		child.item.SetRect(x, y+child.row, usableWidth, child.height)
-		child.item.Draw(clipped)
+		child.Item.SetRect(x, y+child.Row, usableWidth, child.Height)
+		child.Item.Draw(clipped)
 	}
 
 	if drawScrollBar {
@@ -654,7 +658,7 @@ func (l *Model) scrollBarMetrics(width int, viewport int, children []drawnItem) 
 	}
 
 	first := children[0]
-	for i := range first.index {
+	for i := range first.Index {
 		item := l.builder(i, l.cursor)
 		if item == nil {
 			break
@@ -665,7 +669,7 @@ func (l *Model) scrollBarMetrics(width int, viewport int, children []drawnItem) 
 		position += l.itemHeight(item, width)
 	}
 
-	position -= first.row
+	position -= first.Row
 	if position < 0 {
 		position = 0
 	}
@@ -698,10 +702,10 @@ func (l *Model) insertChildren(children *[]drawnItem, width int, ah int) {
 		height := l.itemHeight(item, width)
 		ah -= height
 		entry := drawnItem{
-			index:  l.scroll.top,
-			item:   item,
-			row:    ah,
-			height: height,
+			Index:  l.scroll.top,
+			Item:   item,
+			Row:    ah,
+			Height: height,
 		}
 		*children = append([]drawnItem{entry}, *children...)
 
@@ -719,9 +723,9 @@ func (l *Model) insertChildren(children *[]drawnItem, width int, ah int) {
 		row := 0
 		for i := range *children {
 			child := (*children)[i]
-			child.row = row
+			child.Row = row
 			(*children)[i] = child
-			row += child.height + l.gap
+			row += child.Height + l.gap
 		}
 	}
 }
@@ -1259,12 +1263,12 @@ func (l *Model) indexAtPoint(x, y int) int {
 
 	row := y - l.lastRect.y
 	for _, child := range l.lastDraw {
-		span := child.height
+		span := child.Height
 		if l.gap > 0 {
 			span += l.gap
 		}
-		if row >= child.row && row < child.row+span {
-			return child.index
+		if row >= child.Row && row < child.Row+span {
+			return child.Index
 		}
 	}
 	return -1
@@ -1346,7 +1350,7 @@ func (l *Model) trimToFullItems(children []drawnItem, height int) []drawnItem {
 
 	// Drop any items that start above the viewport.
 	start := 0
-	for start < len(children) && children[start].row < 0 {
+	for start < len(children) && children[start].Row < 0 {
 		start++
 	}
 	if start > 0 {
@@ -1357,16 +1361,16 @@ func (l *Model) trimToFullItems(children []drawnItem, height int) []drawnItem {
 	}
 
 	// Realign the first item to row 0 so we can fill below it.
-	shift := -children[0].row
+	shift := -children[0].Row
 	if shift != 0 {
 		for i := range children {
-			children[i].row += shift
+			children[i].Row += shift
 		}
 	}
 
 	// Trim trailing items that don't fully fit.
 	end := len(children)
-	for end > 0 && children[end-1].row+children[end-1].height > height {
+	for end > 0 && children[end-1].Row+children[end-1].Height > height {
 		end--
 	}
 	children = children[:end]
