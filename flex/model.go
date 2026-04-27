@@ -211,7 +211,14 @@ func (m *Model) Draw(screen tcell.Screen) {
 				item.Item.Draw(screen)
 			}
 		}
+
+		if pd, ok := item.Item.(interface{ PostDraw(tcell.Screen) }); ok {
+			// We do NOT call SetRect here. We rely on the coordinates
+			// set during the Draw() phase to ensure absolute alignment.
+			pd.PostDraw(screen)
+		}
 	}
+
 }
 
 // PostDraw propagates the PostDraw call to all child items.

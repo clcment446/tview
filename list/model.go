@@ -346,6 +346,10 @@ func (l *Model) setLastDraw(children []drawnItem) {
 	l.lastDraw = children
 }
 
+func (l *Model) GetLastChildren() []drawnItem {
+	return l.lastChildren
+}
+
 func (l *Model) PostDraw(screen tcell.Screen) {
 	// Re-fetch dimensions cached during Draw()
 	_, _, width, height := l.InnerRect()
